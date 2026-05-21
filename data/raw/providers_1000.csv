@@ -1,0 +1,22 @@
+provider_id,doctor_name,specialty,location
+PR100,Dr Patel,Neurology,Bangalore
+PR101,Dr Singh,Cardiology,
+PR102,Dr Khan,Cardiology,Bangalore
+PR103,Dr Sharma,General,Mumbai
+PR104,Dr Khan,Orthopedic,
+PR105,Dr Sharma,Orthopedic,
+PR106,Dr Singh,Cardiology,
+PR107,Dr Patel,Orthopedic,Bangalore
+PR108,Dr Sharma,Neurology,Hyderabad
+PR109,Dr Mehta,Cardiology,Chennai
+PR110,Dr Singh,Neurology,Delhi
+PR111,Dr Sharma,Orthopedic,Delhi
+PR112,Dr Sharma,Cardiology,Hyderabad
+PR113,Dr Khan,Neurology,Chennai
+PR114,Dr Patel,Orthopedic,Mumbai
+PR115,Dr Sharma,Orthopedic,Bangalore
+PR116,Dr Singh,Neurology,Delhi
+PR117,Dr Singh,Orthopedic,Chennai
+PR118,Dr Singh,Neurology,Chennai
+PR119,Dr Mehta,Cardiology,Chennai
+PR120,Dr Patel,General,Hyderabad

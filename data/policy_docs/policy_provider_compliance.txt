@@ -1,0 +1,21 @@
+PROVIDER PARTICIPATION AGREEMENT & BILLING COMPLIANCE STANDARDS
+================================================================
+Document: PPA-003 | Version: 1.8 | Effective: 2024-01-01
+Issuing Authority: Provider Relations & Network Management Division
+================================================================
+
+SECTION 1: PROVIDER ELIGIBILITY & CREDENTIALING
+------------------------------------------------
+STANDARD 1.2 — SPECIALTY SCOPE OF PRACTICE
+If The billing pattern is inconsistent with the provider's recorded medical specialty., the claim will be flagged for specialty mismatch review.
+If The billing pattern is consistent with the provider's medical specialty., the claim proceeds through standard credentialing checks.
+
+STANDARD 1.3 — MINIMUM CLAIM VOLUME STANDARDS
+When The provider's low historical claim volume indicates a higher operational risk profile., claims are subject to enhanced pre-payment review.
+When The provider has a high historical claim volume, suggesting a reliable submission pattern., they are placed in the standard processing tier.
+
+SECTION 6: BILLING AMOUNT INTEGRITY
+--------------------------------------
+POLICY 6.1 — MISSING BILLED AMOUNT
+If The claim billed amount was missing from the original source submission., it is considered administratively incomplete.
+If The claim billed amount is present and valid in the original submission., the billing integrity validation is successful.

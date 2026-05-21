@@ -1,0 +1,30 @@
+MEDICAL NECESSITY & CLINICAL CODING GUIDELINES
+===============================================
+Document: MCG-002 | Version: 2.1 | Effective: 2024-01-01
+Reference: CMS ICD-10-CM, AMA CPT Guidelines 2024
+Issuing Authority: Clinical Quality & Utilization Management
+===============================================
+
+SECTION 1: ICD-10-CM DIAGNOSIS CODE REQUIREMENTS
+-------------------------------------------------
+GUIDELINE 1.1 — MANDATORY DIAGNOSIS CODE
+If The medical diagnosis code is missing or invalid in the claim submission., the claim is administratively incomplete.
+If The medical diagnosis code is present and valid., it satisfies the basic coding requirements for the diagnosis field.
+
+GUIDELINE 1.5 — SEVERITY CLASSIFICATION
+When The clinical severity level is inconsistent with the standard billing profile for this claim., it triggers a Medical Necessity Review.
+When The clinical severity level aligns with the expected billing profile., it proceeds without severity-based flagging.
+
+GUIDELINE 1.6 — DIAGNOSIS FREQUENCY
+If This diagnosis code has an unusually low historical claim frequency, indicating potential miscoding., the claim is subject to enhanced review.
+If This diagnosis code has a strong historical claim frequency, indicating a reliable submission., it reduces the likelihood of manual audit.
+
+GUIDELINE 1.7 — DIAGNOSIS CATEGORY ALIGNMENT
+If The diagnosis category is inconsistent with the procedure and billing pattern submitted., it implies a potential upcoding or miscoding error.
+If The diagnosis category is consistent with the procedure and billing pattern., it fulfills clinical alignment checks.
+
+SECTION 2: CPT PROCEDURE CODE GUIDELINES
+-----------------------------------------
+GUIDELINE 2.1 — MANDATORY CPT CODE SUBMISSION
+If The medical procedure code is missing or invalid in the claim submission., it is returned for correction.
+If The medical procedure code is present and valid., the claim line satisfies the procedural coding requirements.

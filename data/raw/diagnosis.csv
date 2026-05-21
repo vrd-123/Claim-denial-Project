@@ -1,0 +1,7 @@
+diagnosis_code,category,severity
+D10,Heart,High
+D20,Bone,High
+D30,Fever,Low
+D40,Skin,Low
+D50,Diabetes,High
+D60,Cold,Low

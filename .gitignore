@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+*.so
+.venv/
+venv/
+env/
+
+# Environment — NEVER commit
+.env
+*.env
+
+# SQLite history DB
+data/claim_history.db
+
+# Model files (large binary — pull from S3)
+models/model.xgb
+models/model.pkl
+
+# macOS
+.DS_Store
+
+# IDEs
+.vscode/
+.idea/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Logs
+*.log
+logs/
+
+# SSL certs
+*.key
+*.crt
+*.pem
+
+# Streamlit secrets
+.streamlit/secrets.toml
+
+# Deployment Secrets
+deploy/secrets/
+

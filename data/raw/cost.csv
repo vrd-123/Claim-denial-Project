@@ -1,0 +1,7 @@
+procedure_code,average_cost,expected_cost,region
+PROC1,4000,5000,Delhi
+PROC2,12000,15000,Mumbai
+PROC3,7000,9000,Bangalore
+PROC4,6000,8000,Hyderabad
+PROC5,20000,25000,Chennai
+PROC6,800,1200,Ahmedabad
