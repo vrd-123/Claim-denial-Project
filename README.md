@@ -95,7 +95,6 @@ The end-to-end user flow is:
    └─────────────┘  └─────────────┘  └──────────────────┘
 ```
 
-For a detailed breakdown of every module, see [`architecture/architecture_documentation.md`](architecture/architecture_documentation.md).
 
 ---
 
