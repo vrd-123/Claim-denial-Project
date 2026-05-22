@@ -300,13 +300,20 @@ def get_logged_in_user_email() -> str:
     if sb_email:
         return sb_email
     # 2. Streamlit native auth (Google SSO via st.login())
-    if hasattr(st, "user"):
+    if hasattr(st, "user") and st.user is not None:
         try:
-            if st.user.is_logged_in and st.user.email:
+            if getattr(st.user, "is_logged_in", False) and getattr(st.user, "email", ""):
                 return st.user.email
         except Exception:
             pass
-    # 3. Fallback — claim will be stored but scoped to 'unknown' so it surfaces in debug
+    # 3. Streamlit experimental_user fallback
+    if hasattr(st, "experimental_user") and st.experimental_user is not None:
+        try:
+            if getattr(st.experimental_user, "is_logged_in", False) and getattr(st.experimental_user, "email", ""):
+                return st.experimental_user.email
+        except Exception:
+            pass
+    # 4. Fallback — claim will be stored but scoped to 'unknown' so it surfaces in debug
     return "unknown"
 
 
@@ -407,7 +414,7 @@ def _save_claim_history(claim_id, outcome, prob, risk, result_dict, billed_amt, 
         logging.error(f"Failed to save claim history: {e}")
         # N-3 — Surface failure so analyst knows the audit trail write failed (spec §2.4)
         st.warning(
-            f"⚠️ Audit trail write failed for claim `{claim_id}`. "
+            f"Audit trail write failed for claim `{claim_id}`. "
             f"This result will NOT appear in the Audit Trail. Error: `{e}`"
         )
 
@@ -1313,19 +1320,30 @@ def _render_fix_wizard_ml(outcome, reasons, result, billed_amt, exp_c, billing_v
 
 # ── Auth gate — unauthenticated users see ONLY the login page ─────────────────
 if not is_authenticated():
-    render_auth_page()
+    try:
+        render_auth_page()
+    except KeyError:
+        st.session_state.clear()
+        st.rerun()
     st.stop()
 
 # ── Normalize user email into sb_email immediately after auth passes ──────────
 # This ensures get_logged_in_user_email() always finds the email regardless of
 # which auth path was used (Supabase password OR Google OAuth via st.login()).
 if not st.session_state.get("sb_email"):
-    # Try Streamlit native auth (Google OAuth)
     _resolved_email = ""
-    if hasattr(st, "user"):
+    # Try Streamlit native auth (Google OAuth)
+    if hasattr(st, "user") and st.user is not None:
         try:
-            if st.user.is_logged_in and st.user.email:
+            if getattr(st.user, "is_logged_in", False) and getattr(st.user, "email", ""):
                 _resolved_email = st.user.email
+        except Exception:
+            pass
+    # Try Streamlit experimental_user fallback
+    if not _resolved_email and hasattr(st, "experimental_user") and st.experimental_user is not None:
+        try:
+            if getattr(st.experimental_user, "is_logged_in", False) and getattr(st.experimental_user, "email", ""):
+                _resolved_email = st.experimental_user.email
         except Exception:
             pass
     # Try Supabase user object as fallback
@@ -1345,12 +1363,12 @@ with st.sidebar:
     health = call_health()
     status_color = "#3fb950" if health.get("status") == "ok" else "#f85149"
     # st.markdown(f"**API Status:** <span style='color:{status_color}'>● {health.get('status','unreachable').upper()}</span>", unsafe_allow_html=True)
-    # st.markdown(f"**ML Models:** {'✅' if health.get('models_loaded') else '❌'}")
-    # st.markdown(f"**RAG:** {'✅' if health.get('rag_loaded') else '❌'}")
+    # st.markdown(f"**ML Models:** {'Yes' if health.get('models_loaded') else 'No'}")
+    # st.markdown(f"**RAG:** {'Yes' if health.get('rag_loaded') else 'No'}")
     # st.markdown("---")
     page = st.radio("Navigate", [
         "Submit & Predict",
-        "Claim Search & Audit Trail",
+        "Claims Review & Tracking",
         "Claim Fix Wizard",
         "Policy Explorer",
     ], key="navigate_tab")
@@ -1577,17 +1595,48 @@ if page == "Submit & Predict":
                                     })
                                     continue
                                     
-                                # Parsing valid dates/floats
-                                try:
-                                    svc_dt = sdt
-                                    for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y"):
-                                        try:
-                                            svc_dt = datetime.datetime.strptime(sdt, fmt).date().isoformat()
-                                            break
-                                        except ValueError:
-                                            pass
-                                except Exception:
-                                    svc_dt = sdt
+                                # Robustly parse service date
+                                parsed_date = None
+                                sdt_cleaned = sdt.replace(".", "-").replace("/", "-")
+                                
+                                for fmt in ("%Y-%m-%d", "%d-%m-%Y", "%m-%d-%Y", "%Y/%m/%d", "%d/%m/%Y", "%m/%d/%Y"):
+                                    try:
+                                        parsed_date = datetime.datetime.strptime(sdt, fmt).date()
+                                        break
+                                    except ValueError:
+                                        pass
+                                    try:
+                                        parsed_date = datetime.datetime.strptime(sdt_cleaned, fmt).date()
+                                        break
+                                    except ValueError:
+                                        pass
+                                        
+                                if parsed_date is None:
+                                    processed_results.append({
+                                        "claim_id": cid or f"ROW_{idx+1}",
+                                        "patient_id": pid,
+                                        "provider_id": prov,
+                                        "diagnosis_code": diag,
+                                        "procedure_code": prc,
+                                        "billed_amount": amt,
+                                        "service_date": sdt,
+                                        "policy_id": pol,
+                                        "status": "INVALID_INPUT",
+                                        "duplicate_type": "—",
+                                        "risk_score_str": "—",
+                                        "denial_prob": 0.0,
+                                        "primary_reason": f"Invalid service date: '{sdt}'",
+                                        "policy_match": "N/A",
+                                        "next_action": "Ensure the service date is a valid date (e.g. YYYY-MM-DD or DD/MM/YYYY).",
+                                        "violations": [{"field": "service_date", "message": f"Invalid service date '{sdt}'"}],
+                                        "reasons": [],
+                                        "recommendation": "Check the service_date column in your CSV/Excel template.",
+                                        "outcome_key": "INVALID_INPUT",
+                                        "row_number": idx + 1
+                                    })
+                                    continue
+                                    
+                                svc_dt = parsed_date.isoformat()
                                     
                                 try:
                                     billed_amt = float(amt)
@@ -1989,6 +2038,7 @@ if page == "Submit & Predict":
                                 progress_bar.empty()
 
                             st.session_state["processed_batch_results"] = processed_results
+                            st.session_state["last_prediction_source"] = "batch"
                             st.rerun()
                             
         # Clear batch results if file is changed or uploader is empty
@@ -2182,6 +2232,7 @@ if page == "Submit & Predict":
                     st.info(f"**Suggested Fix**: {claim_details['next_action']}")
                 else:
                     st.session_state["last_result"] = _batch_res
+                    st.session_state["last_prediction_source"] = "batch"
                     st.session_state["last_claim_dup_status"] = "DUPLICATE_ID" if status_val == "REVISED_RESUBMISSION" else "NEW"
                     
                     st.markdown("---")
@@ -2344,6 +2395,7 @@ if page == "Submit & Predict":
 
         # ── Pipeline on submit ──────────────────────────────────────────────────────
         if submitted:
+            st.session_state["last_prediction_source"] = "single"
             has_error = False
         
             if not claim_id or claim_invalid:
@@ -2595,23 +2647,30 @@ if page == "Submit & Predict":
                                         st.session_state["last_result"], billed_amt, exp_c, proc_code, diag_code, provider_id,
                                         svc_date.isoformat() if svc_date else None, policy_id, patient_id)
 
-# ── Page: Claim Search & Audit Trail ──────────────────────────────────────────
-elif page == "Claim Search & Audit Trail":
+# ── Page: Claims Review & Tracking ──────────────────────────────────────────
+elif page == "Claims Review & Tracking":
     import sqlite3
     import pandas as pd
     import datetime
 
-    st.markdown("#  Claim Search & Audit Trail")
+    st.markdown("#  Claims Review & Tracking")
     st.markdown("Search, audit, and compare every claim you have submitted.")
 
     # ── Auth guard (spec §3.4) ────────────────────────────────────────────────
     current_user_email = st.session_state.get("sb_email", "")
-    if not current_user_email and hasattr(st, "user"):
-        try:
-            if st.user.is_logged_in and st.user.email:
-                current_user_email = st.user.email
-        except Exception:
-            pass
+    if not current_user_email:
+        if hasattr(st, "user") and st.user is not None:
+            try:
+                if getattr(st.user, "is_logged_in", False) and getattr(st.user, "email", ""):
+                    current_user_email = st.user.email
+            except Exception:
+                pass
+        if not current_user_email and hasattr(st, "experimental_user") and st.experimental_user is not None:
+            try:
+                if getattr(st.experimental_user, "is_logged_in", False) and getattr(st.experimental_user, "email", ""):
+                    current_user_email = st.experimental_user.email
+            except Exception:
+                pass
 
     if not current_user_email:
         st.error("You must be signed in to view the audit trail.")
@@ -2768,7 +2827,7 @@ elif page == "Claim Search & Audit Trail":
     if not rows:
         st.info("No matching claims found. Try widening the date range or clearing the filters.")
 
-        with st.expander("🔍 Debug: show your claims in claim_history (up to 30)"):
+        with st.expander("Debug: show your claims in claim_history (up to 30)"):
             try:
                 _dc = _get_db_conn()
                 _dc.row_factory = sqlite3.Row
@@ -2791,7 +2850,7 @@ elif page == "Claim Search & Audit Trail":
                 else:
                     st.warning(
                         "No claims found for your account. If you just submitted a claim and "
-                        "expected it to appear, watch for the ⚠️ warning shown after analysis — "
+                        "expected it to appear, watch for the warning shown after analysis — "
                         "it means the audit trail write failed."
                     )
             except Exception as _de:
@@ -2804,14 +2863,25 @@ elif page == "Claim Search & Audit Trail":
             _dup_key = (r["provider_id"], r["diagnosis_code"], r["procedure_code"],
                         r["billed_amount"], r["service_date"], r["policy_id"], r["patient_id"])
             is_dup = "Yes" if dup_map.get(_dup_key, 1) > 1 else "No"
+            
+            # Format datetime safely
+            sub_at = r["submitted_at"]
+            if hasattr(sub_at, "strftime"):
+                sub_at_str = sub_at.strftime("%Y-%m-%d %H:%M:%S")
+            else:
+                sub_at_str = str(sub_at or "")
+                
+            sub_date = sub_at_str[:16].replace("T", " ") if sub_at_str else ""
+            last_up = sub_at_str[:10] if sub_at_str else ""
+            
             table_data.append({
                 "Claim ID":          r["claim_id"],
-                "Submitted Date":    r["submitted_at"][:16].replace("T", " "),
+                "Submitted Date":    sub_date,
                 "Status":            r["predicted_status"],
                 "Risk Level":        r["risk_level"] or "LOW",
                 "Denial Probability": f"{float(r['denial_prob'] or 0)*100:.1f}%",
                 "Duplicate Flag":    is_dup,
-                "Last Updated":      r["submitted_at"][:10],
+                "Last Updated":      last_up,
             })
         df = pd.DataFrame(table_data)
 
@@ -3011,9 +3081,17 @@ elif page == "Claim Search & Audit Trail":
                         _sc = ("#3fb950" if _sv == "APPROVED"
                                else "#f85149" if _sv in ("DENIED", "RULE_DENY")
                                else "#d29922")
+                        
+                        _v_at = _v["submitted_at"]
+                        if hasattr(_v_at, "strftime"):
+                            _v_at_str = _v_at.strftime("%Y-%m-%d %H:%M:%S")
+                        else:
+                            _v_at_str = str(_v_at or "")
+                        _v_date = _v_at_str[:16].replace("T", " ") if _v_at_str else ""
+                        
                         st.markdown(
                             f"**Version {_vnum}** "
-                            f"({_v['submitted_at'][:16].replace('T', ' ')})  "
+                            f"({_v_date})  "
                             f"<span style='color:{_sc};font-weight:bold'>{_sv}</span>  "
                             f"| Billed: `₹{float(_v['billed_amount'] or 0):,.0f}` "
                             f"| Proc: `{_v['procedure_code'] or '—'}`",
@@ -3042,7 +3120,7 @@ elif page == "Claim Search & Audit Trail":
                             _cmp_rows.append({
                                 "Field": _f.replace("_", " ").title(),
                                 f"V{_v1_sel}": _va, f"V{_v2_sel}": _vb,
-                                "Changed?": "✅ Changed" if str(_va) != str(_vb) else "Identical"
+                                "Changed?": "Changed" if str(_va) != str(_vb) else "Identical"
                             })
                         _cdf = pd.DataFrame(_cmp_rows)
 
@@ -3086,8 +3164,9 @@ elif page == "Claim Fix Wizard":
 
     result   = st.session_state.get("last_result")
     claim_id = st.session_state.get("last_claim_id", "—")
+    prediction_source = st.session_state.get("last_prediction_source", "single")
 
-    if not result:
+    if not result or prediction_source == "batch":
         st.info("Go to **Submit & Predict** first to analyse a claim, then return here.")
     else:
         outcome  = result.get("outcome", "ML_DENY")

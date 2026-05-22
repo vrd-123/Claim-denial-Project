@@ -78,12 +78,19 @@ if [ "$SECRET_JSON" != "FAILED" ]; then
     DB_USER=$(echo "$SECRET_JSON" | jq -r '.username')
     DB_PASS=$(echo "$SECRET_JSON" | jq -r '.password')
     DB_NAME=$(echo "$SECRET_JSON" | jq -r '.dbname')
+    # Dynamic retrieval of API keys/tokens from Secrets Manager if present, otherwise use placeholders
+    DATABRICKS_TOKEN=$(echo "$SECRET_JSON" | jq -r '.databricks_token // "YOUR_DATABRICKS_TOKEN_PLACEHOLDER"')
+    SUPABASE_ANON_KEY=$(echo "$SECRET_JSON" | jq -r '.supabase_anon_key // "YOUR_SUPABASE_ANON_KEY_PLACEHOLDER"')
+    JWT_SECRET_KEY=$(echo "$SECRET_JSON" | jq -r '.jwt_secret_key // "YOUR_JWT_SECRET_KEY_PLACEHOLDER"')
 else
     echo "WARNING: Secrets Manager retrieval failed. Using template environment variables."
     DB_HOST="YOUR_RDS_ENDPOINT_HERE"
     DB_USER="cdpuser"
     DB_PASS="YOUR_DB_PASSWORD"
     DB_NAME="cdp"
+    DATABRICKS_TOKEN="YOUR_DATABRICKS_TOKEN_PLACEHOLDER"
+    SUPABASE_ANON_KEY="YOUR_SUPABASE_ANON_KEY_PLACEHOLDER"
+    JWT_SECRET_KEY="YOUR_JWT_SECRET_KEY_PLACEHOLDER"
 fi
 
 # Generate env file securely
@@ -91,10 +98,10 @@ cat > /etc/cdp.env << ENV
 API_BASE_URL=http://localhost:8000
 DATABRICKS_HOST=dbc-a2e56a8a-ad64.cloud.databricks.com
 DATABRICKS_HTTP_PATH=/sql/1.0/warehouses/1cb48defb84223fa
-DATABRICKS_TOKEN=
+DATABRICKS_TOKEN=$DATABRICKS_TOKEN
 SUPABASE_URL=https://iekklcobusdbvqckijqr.supabase.co
-SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlla2tsY29idXNkYnZxY2tpanFyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5MDg0NTMsImV4cCI6MjA5NDQ4NDQ1M30.d2qx6tnkTsGjY1CSH2OPbWwaO_g5fbIgo66r5x97TLY
-JWT_SECRET_KEY=ed56c064a3868be3601371081c715e7064bb8775e48b32c5422eb4ddb732b1a1
+SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY
+JWT_SECRET_KEY=$JWT_SECRET_KEY
 JWT_ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=60
 REFRESH_TOKEN_EXPIRE_HOURS=24
