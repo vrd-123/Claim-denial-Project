@@ -1,4 +1,4 @@
-# 🏥 Claim Denial Prevention System (CDP)
+# Claim Denial Prevention System (CDP)
 
 > An AI-powered, end-to-end claim denial prediction and remediation platform for healthcare billing analysts.  
 > Built with FastAPI · Streamlit · RandomForest + XGBoost · RAG · XAI · Databricks · AWS
@@ -50,15 +50,15 @@ The end-to-end user flow is:
 
 | Feature | Description |
 |---|---|
-| 🤖 **ML Prediction** | RandomForest (primary) + XGBoost (fallback) trained on Databricks. 12-feature engineering pipeline with billing ratio, severity score, claim age, provider history, and more |
-| 🔍 **XAI / SHAP** | Feature-importance-weighted SHAP proxy scores translate model decisions into plain English explanations |
-| 📄 **RAG Policy Retrieval** | ChromaDB vector store with `all-MiniLM-L6-v2` embeddings retrieves the most relevant insurance policy passages for each denial reason |
-| 🧠 **Agent Orchestrator** | Rule-based agent combines ML + RAG outputs to produce a single, prioritised recommendation and step-by-step fix |
-| 📤 **Text Extraction** | GPT-4o (primary) or regex heuristics (fallback) extract structured claim fields from unstructured free-text |
-| 📦 **Batch Processing** | Upload a CSV of claims and run the full pipeline across all rows with a single click |
-| 🔐 **Auth** | Supabase (email/password + Google OAuth) with JWT access tokens and refresh token rotation |
-| 📊 **Databricks Integration** | Queries the Gold Delta Lake table to look up existing claim predictions from the data warehouse |
-| 🏗️ **Production AWS Stack** | VPC + public/private subnets, EC2 (Ubuntu 24.04), RDS PostgreSQL, AWS Secrets Manager, SSM Agent, NAT Gateway |
+| **ML Prediction** | RandomForest (primary) + XGBoost (fallback) trained on Databricks. 12-feature engineering pipeline with billing ratio, severity score, claim age, provider history, and more |
+| **XAI / SHAP** | Feature-importance-weighted SHAP proxy scores translate model decisions into plain English explanations |
+| **RAG Policy Retrieval** | ChromaDB vector store with `all-MiniLM-L6-v2` embeddings retrieves the most relevant insurance policy passages for each denial reason |
+| **Agent Orchestrator** | Rule-based agent combines ML + RAG outputs to produce a single, prioritised recommendation and step-by-step fix |
+| **Text Extraction** | GPT-4o (primary) or regex heuristics (fallback) extract structured claim fields from unstructured free-text |
+| **Batch Processing** | Upload a CSV of claims and run the full pipeline across all rows with a single click |
+| **Auth** | Supabase (email/password + Google OAuth) with JWT access tokens and refresh token rotation |
+| **Databricks Integration** | Queries the Gold Delta Lake table to look up existing claim predictions from the data warehouse |
+| **Production AWS Stack** | VPC + public/private subnets, EC2 (Ubuntu 24.04), RDS PostgreSQL, AWS Secrets Manager, SSM Agent, NAT Gateway |
 
 ---
 
@@ -167,7 +167,7 @@ DB_USER=cdpuser
 DB_PASSWORD=<your-db-password>
 ```
 
-> ⚠️ **Never commit your `.env` file.** It is already listed in `.gitignore`.
+> **Never commit your `.env` file.** It is already listed in `.gitignore`.
 
 ### Running the API
 
